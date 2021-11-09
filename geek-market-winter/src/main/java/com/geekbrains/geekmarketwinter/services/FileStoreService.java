@@ -24,17 +24,24 @@ public class FileStoreService implements IFileStoreService {
     IFileMetaProvider fileMetaProvider;
 
     @Override
-    public String storeFile(byte[] content, String fileName, int subFileType) throws IOException, NoSuchAlgorithmException {
+    public String storeFile(byte[] content, String originalFilename, int subFileType) throws IOException, NoSuchAlgorithmException {
         final UUID md5 = HashHelper.getMd5Hash(content);
 
+        // Сохранение нового файла
         String filename = fileMetaProvider.checkFileExists(md5);
-
         if (filename == null) {
-            fileMetaProvider.saveFileMeta(md5, fileName, subFileType);
-            filename = systemProvider.storeFile(content, md5, fileName);
+            filename = systemProvider.storeFile(content, md5, originalFilename);
         }
 
-        return filename;
+        //  Добавление записи в БД если:
+        //  - UUID отсутствует в БД
+        //  - При наличии данного UUID отличается originalFilename или subFileType
+        Collection<FileMetaDTO> fileMetaDTO = fileMetaProvider.getMetaFile (md5, originalFilename, subFileType);
+        if (fileMetaDTO.isEmpty ()){
+            fileMetaProvider.saveFileMeta(md5, originalFilename, subFileType);
+        }
+
+        return originalFilename;
     }
 
     @Override
