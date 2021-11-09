@@ -16,6 +16,9 @@ public class FileMetaProvider implements IFileMetaProvider {
     private static final String GET_FILES_META = "select hash, fileName as filename from filemeta" +
             " where subType =:subtype";
 
+    private static final String GET_FILE_META = "select hash, fileName, subtype as filename from filemeta" +
+            " where hash =:hash and fileName =:fileName and subType =:subtype";
+
     private static final String GET_FILE_PATH_BY_HASH = "select fileName as filename from filemeta" +
             " where hash =:hash";
 
@@ -35,6 +38,17 @@ public class FileMetaProvider implements IFileMetaProvider {
                    .addParameter("hash", fileHash)
                    .executeScalar(String.class);
        }
+    }
+
+    @Override
+    public Collection<FileMetaDTO>  getMetaFile(UUID hash, String fileName, int subType){
+        try(Connection connection = sql2o.open())  {
+            return connection.createQuery(GET_FILE_META, false)
+                    .addParameter("hash", hash)
+                    .addParameter("fileName", fileName)
+                    .addParameter("subtype", subType)
+                    .executeAndFetch(FileMetaDTO.class);
+        }
     }
 
     @Override
